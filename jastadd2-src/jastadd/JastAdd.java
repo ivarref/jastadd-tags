@@ -234,8 +234,11 @@ public class JastAdd {
                 }
                 fw.close();
                 System.out.println("Wrote tags file.");
+
+                writeEmacsTagsFile();
+
             } catch (IOException e) {
-                System.out.println("failed to write tags file." + e);
+                System.out.println("Failed to write tags file." + e);
             }
 
             //System.out.println("AST parse time: " + astParseTime + ", AST error check: " + astErrorTime + ", JRAG parse time: " + 
@@ -253,6 +256,81 @@ public class JastAdd {
         e.printStackTrace();
         System.exit(1);
       }
+    }
+
+    public void writeEmacsTagsFile() throws IOException {
+        FileWriter fw = new FileWriter("./TAGS"); // write emacs TAGS file
+        Iterator it = root.tags().iterator();
+
+        HashMap ht = new HashMap();
+        while (it.hasNext()) {
+            String tag = (String)it.next();
+            String[] parts = tag.split("\t");
+
+            String fname = parts[1];
+            if (!ht.containsKey(fname)) {
+                ht.put(fname, new LinkedList());
+            }
+            LinkedList l = (LinkedList)ht.get(fname);
+            l.add(tag);
+        }
+
+        /* etags format, from Wikipedia:
+           <\x0c> 
+           test.c,21
+           CCC(<\x7f>CCC<\x01>1,0 
+           {tag_definition_text}<\x7f>{tagname}<\x01>{line_number},{byte_offset}
+           */
+
+        Iterator keys = ht.keySet().iterator();
+        while (keys.hasNext())  {
+            String filename = (String)keys.next();
+            StringBuilder sb = new StringBuilder();
+            LinkedList l = (LinkedList)ht.get(filename);
+            Iterator tagIter = l.iterator();
+            while (tagIter.hasNext()) {
+                String tag = (String)tagIter.next();
+                String[] parts = tag.split("\t");
+                sb.append(getContentOfLineNumber(parts[1], Integer.parseInt(parts[2])) + "$" + parts[0] + "^" + parts[2] + ",0\n");
+            }
+            fw.write(0xc);
+            fw.write(0xa);
+            fw.write(filename + "," + (0+sb.length()) + "\n");
+            tagIter = l.iterator();
+            while (tagIter.hasNext()) {
+                String tag = (String)tagIter.next();
+                String[] parts = tag.split("\t");
+                fw.write(getContentOfLineNumber(parts[1], Integer.parseInt(parts[2]))); // tag definition text
+                fw.write(0x7f);     // sep
+                fw.write(parts[0]); // tag name
+                fw.write(0x1);
+                fw.write(parts[2] + ",0\n"); // line number
+            }
+        }
+
+        fw.close();
+        System.out.println("Wrote emacs TAGS file.");
+    }
+
+    public String getContentOfLineNumber(String fileName, int lineNumber) {
+        try {
+            File file = new File(fileName);
+            FileReader freader = new FileReader(file);
+            LineNumberReader lnreader = new LineNumberReader(freader);
+            String line = "";
+            while ((line = lnreader.readLine()) != null){
+                if (lnreader.getLineNumber()==lineNumber) {
+                    freader.close();
+                    lnreader.close();
+                    return line;
+                }
+            }
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        System.err.println("Warning: Could not get line " + lineNumber + " from file " + fileName);
+        return "failed";
     }
 
     /* Read and process commandline */
