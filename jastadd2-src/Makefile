@@ -5,7 +5,7 @@ JJTREE=java -classpath tools/JavaCC.jar org.javacc.jjtree.Main -JDK_VERSION=1.4
 JASTADD=java -jar tools/jastadd2.jar
 
 JRAGFILES=ast/ClassRelations.jrag ast/ComponentsUtil.jrag ast/Errorcheck.jrag ast/JaddCodeGen.jrag ast/NameBinding.jrag \
- jrag/Attributes.jrag jrag/Circular.jrag jrag/CollectionAttributes.jrag jrag/Errorcheck.jrag jrag/JragCodeGen.jrag jrag/NameBinding.jrag
+ jrag/Attributes.jrag jrag/Circular.jrag jrag/CollectionAttributes.jrag jrag/Errorcheck.jrag jrag/JragCodeGen.jrag jrag/NameBinding.jrag jrag/Tags.jrag
 
 all : ast/AST/Grammar.java ast/AST/Ast.java jrag/AST/JragParser.java jastadd/JastAdd.java
 	chmod u+x ./newrelease && ./newrelease && $(ASPECTJ) `find ast jastadd jrag org -name "*.java"`

@@ -1,0 +1,38 @@
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+aspect Tags {
+
+  coll SortedSet Grammar.tags() [new TreeSet()] with add;
+
+  InhEq         contributes (getName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
+  AttrDecl      contributes (getName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
+  ClassBodyDecl contributes (getName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
+  SynEq         contributes (getName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
+  CollEq        contributes (getTargetAttributeName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
+
+  inh Grammar AttrEq.getGrammar();
+  inh Grammar AttrDecl.getGrammar();
+  inh Grammar ClassBodyDecl.getGrammar();
+  eq Grammar.getTypeDecl(int i).getGrammar() = this;
+
+  public String ASTNode.fullFileName = null;
+
+  public int ASTNode.setFName(String fileName) {
+      int count = 0;
+      if (fullFileName==null) { count=1; fullFileName = fileName; }
+      for (int i=0; i<getNumChild(); i++) {
+          ASTNode child = getChild(i);
+          count += child.setFName(fileName);
+      }
+      return count;
+  }
+
+  public String ASTNode.getFullFileName() { 
+      if (fullFileName==null) {
+          throw new RuntimeException("FullFileName was null for " + this.toString() + " of class " + getClass().getName());
+      }
+      return fullFileName; 
+  }
+
+}
