@@ -12,7 +12,7 @@ import jrag.*;
 
 public class JastAdd {
   
-    public static final String VERSION = "JastAdd II (http://jastadd.cs.lth.se) version R20090610";
+    public static final String VERSION = "JastAdd II (http://jastadd.cs.lth.se) version R20100608";
     public static final String VERSIONINFO = "\n// Generated with " + VERSION + "\n\n";
 
     protected java.util.List files;
@@ -41,6 +41,8 @@ public class JastAdd {
            root.abstractAncestors();
            
  	         // Parse ast-grammar
+           TreeSet ASTdefs = new TreeSet();
+
            Collection errors = new ArrayList();
            for(Iterator iter = files.iterator(); iter.hasNext(); ) {
              String fileName = (String)iter.next();
@@ -118,6 +120,13 @@ public class JastAdd {
                     jp.root = root;
                     jp.setFileName(new File(fileName).getName());
                     ASTCompilationUnit au = jp.CompilationUnit();
+
+                    String shortName = new File(fileName).getName();
+                    String longName = new File(fileName).getCanonicalPath();
+                    int count = root.setFName(longName);
+                    //System.out.println("filenames: wrote " + count);
+                    extractDefinitions(ASTdefs, longName, au);
+
                     root.addCompUnit(au);
                   } catch (jrag.AST.ParseException e) {
                     StringBuffer msg = new StringBuffer();
@@ -212,7 +221,23 @@ public class JastAdd {
               System.exit(1);
           }
             long codegenTime = System.currentTimeMillis() - time - jragErrorTime;
-	    
+
+            try {
+                FileWriter fw = new FileWriter("./tags");
+                root.flushCache();
+                root.tags().addAll(ASTdefs);
+
+                Iterator it = root.tags().iterator();
+                while (it.hasNext()) {
+                    String tag = (String)it.next();
+                    fw.write(tag + "\n");
+                }
+                fw.close();
+                System.out.println("Wrote tags file.");
+            } catch (IOException e) {
+                System.out.println("failed to write tags file." + e);
+            }
+
             //System.out.println("AST parse time: " + astParseTime + ", AST error check: " + astErrorTime + ", JRAG parse time: " + 
             //    jragParseTime + ", JRAG error time: " + jragErrorTime + ", Code generation: " + codegenTime);
       }
@@ -430,5 +455,19 @@ public class JastAdd {
         System.out.println("JastAdd --package=ast Toy.ast NameAnalysis.jrag TypeAnalysis.jrag PrettyPrinter.jadd");
         System.out.println();
         System.out.println("Stopping program");
+    }
+
+    public void extractDefinitions(TreeSet ts, String fileName, jrag.AST.Node n) {
+        if(n instanceof jrag.AST.ASTAspectMethodDeclaration || n instanceof jrag.AST.ASTAspectRefineMethodDeclaration) {
+            // retrieve methodName
+            // AspectMethodDeclaration -> MethodDeclarator -> <IDENTIFIER>
+            String idDecl = ((jrag.AST.SimpleNode)n.jjtGetChild(1)).firstToken.image;
+            int line = ((jrag.AST.SimpleNode)n.jjtGetChild(1)).firstToken.beginLine;
+            String methodName = idDecl.trim();
+            ts.add(methodName + "\t" + fileName +"\t" + line);
+        }
+        for (int i=0; i<n.jjtGetNumChildren(); i++) {
+            extractDefinitions(ts, fileName, n.jjtGetChild(i));
+        }
     }
 }
