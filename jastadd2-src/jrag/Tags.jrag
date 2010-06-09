@@ -5,11 +5,11 @@ aspect Tags {
 
   coll SortedSet Grammar.tags() [new TreeSet()] with add;
 
-  InhEq         contributes (getName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
-  AttrDecl      contributes (getName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
-  ClassBodyDecl contributes (getName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
-  SynEq         contributes (getName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
-  CollEq        contributes (getTargetAttributeName() + "\t" + getFullFileName() + "\t" + getStartLine()) to Grammar.tags() for getGrammar();
+  InhEq         contributes ( new Tag(getName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
+  AttrDecl      contributes ( new Tag(getName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
+  ClassBodyDecl contributes ( new Tag(getName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
+  SynEq         contributes ( new Tag(getName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
+  CollEq        contributes ( new Tag(getTargetAttributeName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
 
   inh Grammar AttrEq.getGrammar();
   inh Grammar AttrDecl.getGrammar();
@@ -34,5 +34,46 @@ aspect Tags {
       }
       return fullFileName; 
   }
+
+  private String Tag.tagText = null;
+  public String Tag.getTagText() {
+      if (tagText!=null) return tagText;
+      try {
+          File file = new File(getFileName());
+          FileReader freader = new FileReader(getFileName());
+          LineNumberReader lnreader = new LineNumberReader(freader);
+          String line = "";
+          while ((line = lnreader.readLine()) != null){
+              if (lnreader.getLineNumber()==getLineNumber()) {
+                  freader.close();
+                  lnreader.close();
+                  tagText = line;
+                  return line;
+              }
+          }
+      }
+      catch (Exception ex) {
+          ex.printStackTrace();
+      }
+      System.err.println("Warning: Could not get line " + getLineNumber() + " from file " + getFileName());
+      tagText = "failed";
+      return tagText;
+  }
+
+  Tag implements Comparable;
+
+  public int Tag.compareTo(Object o) {
+      if (o instanceof Tag) {
+          Tag k = (Tag)o;
+          Tag s = this;
+          String b = k.getName() + k.getFileName() + k.getLineNumber();
+          String a = s.getName() + s.getFileName() + s.getLineNumber();
+          return a.compareTo(b);
+      }
+      else {
+          throw new RuntimeException(getClass().getName() + " attempted compared to " + o.getClass().getName());
+      }
+  }
+
 
 }

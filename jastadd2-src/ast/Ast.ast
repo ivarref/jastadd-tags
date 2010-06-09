@@ -59,3 +59,6 @@ IdUse ::= <ID:String>;
 IdDecl ::= <ID:String>;
 
 TokenId ::= <ID:String> <TYPE:String>;
+
+Tag ::= <Name:String> <FileName:String> <LineNumber:int>;
+

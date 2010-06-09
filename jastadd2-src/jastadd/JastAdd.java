@@ -12,7 +12,7 @@ import jrag.*;
 
 public class JastAdd {
   
-    public static final String VERSION = "JastAdd II (http://jastadd.cs.lth.se) version R20100608";
+    public static final String VERSION = "JastAdd II (http://jastadd.cs.lth.se) version R20100609";
     public static final String VERSIONINFO = "\n// Generated with " + VERSION + "\n\n";
 
     protected java.util.List files;
@@ -224,13 +224,12 @@ public class JastAdd {
 
             try {
                 FileWriter fw = new FileWriter("./tags");
-                root.flushCache();
                 root.tags().addAll(ASTdefs);
 
                 Iterator it = root.tags().iterator();
                 while (it.hasNext()) {
-                    String tag = (String)it.next();
-                    fw.write(tag + "\n");
+                    Tag tag = (Tag)it.next();
+                    fw.write(tag.getName() + "\t" + tag.getFileName() + "\t/^" + tag.getTagText() + "$/\n");
                 }
                 fw.close();
                 System.out.println("Wrote tags file.");
@@ -264,14 +263,12 @@ public class JastAdd {
 
         HashMap ht = new HashMap();
         while (it.hasNext()) {
-            String tag = (String)it.next();
-            String[] parts = tag.split("\t");
+            Tag tag = (Tag)it.next();
 
-            String fname = parts[1];
-            if (!ht.containsKey(fname)) {
-                ht.put(fname, new LinkedList());
+            if (!ht.containsKey(tag.getFileName())) {
+                ht.put(tag.getFileName(), new LinkedList());
             }
-            LinkedList l = (LinkedList)ht.get(fname);
+            LinkedList l = (LinkedList)ht.get(tag.getFileName());
             l.add(tag);
         }
 
@@ -289,48 +286,26 @@ public class JastAdd {
             LinkedList l = (LinkedList)ht.get(filename);
             Iterator tagIter = l.iterator();
             while (tagIter.hasNext()) {
-                String tag = (String)tagIter.next();
-                String[] parts = tag.split("\t");
-                sb.append(getContentOfLineNumber(parts[1], Integer.parseInt(parts[2])) + "$" + parts[0] + "^" + parts[2] + ",0\n");
+                Tag tag = (Tag)tagIter.next();
+                sb.append(tag.getTagText() + "$" + tag.getName() + "^" + tag.getLineNumber() + ",0\n");
+                        //getContentOfLineNumber(parts[1], Integer.parseInt(parts[2])) + "$" + parts[0] + "^" + parts[2] + ",0\n");
             }
             fw.write(0xc);
             fw.write(0xa);
-            fw.write(filename + "," + (0+sb.length()) + "\n");
+            fw.write(filename + "," + sb.length() + "\n");
             tagIter = l.iterator();
             while (tagIter.hasNext()) {
-                String tag = (String)tagIter.next();
-                String[] parts = tag.split("\t");
-                fw.write(getContentOfLineNumber(parts[1], Integer.parseInt(parts[2]))); // tag definition text
-                fw.write(0x7f);     // sep
-                fw.write(parts[0]); // tag name
+                Tag tag = (Tag)tagIter.next();
+                fw.write(tag.getTagText());
+                fw.write(0x7f);     // separator
+                fw.write(tag.getName()); // tag name
                 fw.write(0x1);
-                fw.write(parts[2] + ",0\n"); // line number
+                fw.write(tag.getLineNumber() + ",0\n"); // line number
             }
         }
 
         fw.close();
         System.out.println("Wrote emacs TAGS file.");
-    }
-
-    public String getContentOfLineNumber(String fileName, int lineNumber) {
-        try {
-            File file = new File(fileName);
-            FileReader freader = new FileReader(file);
-            LineNumberReader lnreader = new LineNumberReader(freader);
-            String line = "";
-            while ((line = lnreader.readLine()) != null){
-                if (lnreader.getLineNumber()==lineNumber) {
-                    freader.close();
-                    lnreader.close();
-                    return line;
-                }
-            }
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        System.err.println("Warning: Could not get line " + lineNumber + " from file " + fileName);
-        return "failed";
     }
 
     /* Read and process commandline */
@@ -542,7 +517,7 @@ public class JastAdd {
             String idDecl = ((jrag.AST.SimpleNode)n.jjtGetChild(1)).firstToken.image;
             int line = ((jrag.AST.SimpleNode)n.jjtGetChild(1)).firstToken.beginLine;
             String methodName = idDecl.trim();
-            ts.add(methodName + "\t" + fileName +"\t" + line);
+            ts.add(new Tag(methodName, fileName, line));
         }
         for (int i=0; i<n.jjtGetNumChildren(); i++) {
             extractDefinitions(ts, fileName, n.jjtGetChild(i));

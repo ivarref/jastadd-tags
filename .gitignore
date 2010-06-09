@@ -1,3 +1,7 @@
 *.swp
 *.class
+jastadd2-src/jrag/AST/*.java
+jastadd2-src/jrag/AST/*.jj
+jastadd2-src/jastadd2.jar
+jastadd2-src/ast/AST/*
 
