@@ -12,7 +12,7 @@ import jrag.*;
 
 public class JastAdd {
   
-    public static final String VERSION = "JastAdd II (http://jastadd.cs.lth.se) version R20100609";
+    public static final String VERSION = "JastAdd II (http://jastadd.cs.lth.se) version R20100610";
     public static final String VERSIONINFO = "\n// Generated with " + VERSION + "\n\n";
 
     protected java.util.List files;
@@ -54,6 +54,7 @@ public class JastAdd {
                  for(int i = 0; i < g.getNumTypeDecl(); i++) {
                    root.addTypeDecl(g.getTypeDecl(i));
                  }
+                 root.setFName(new File(fileName).getCanonicalPath());
                  for(Iterator errorIter = parser.getErrors(); errorIter.hasNext(); ) {
                    String[] s = ((String)errorIter.next()).split(";");
                    errors.add("Syntax error in " + fileName + " at line " + s[0] + ", column " + s[1]);
@@ -226,7 +227,16 @@ public class JastAdd {
                 FileWriter fw = new FileWriter("./tags");
                 root.tags().addAll(ASTdefs);
 
+                SortedSet validTags = new TreeSet();
                 Iterator it = root.tags().iterator();
+                while (it.hasNext()) {
+                    Tag tag = (Tag)it.next();
+                    if (tag.hasTagText()) {
+                        validTags.add(tag);
+                    }
+                }
+
+                it = validTags.iterator();
                 while (it.hasNext()) {
                     Tag tag = (Tag)it.next();
                     fw.write(tag.getName() + "\t" + tag.getFileName() + "\t/^" + tag.getTagText() + "$/\n");
@@ -234,7 +244,7 @@ public class JastAdd {
                 fw.close();
                 System.out.println("Wrote tags file.");
 
-                writeEmacsTagsFile();
+                writeEmacsTagsFile(validTags);
 
             } catch (IOException e) {
                 System.out.println("Failed to write tags file." + e);
@@ -257,9 +267,9 @@ public class JastAdd {
       }
     }
 
-    public void writeEmacsTagsFile() throws IOException {
+    public void writeEmacsTagsFile(SortedSet tags) throws IOException {
         FileWriter fw = new FileWriter("./TAGS"); // write emacs TAGS file
-        Iterator it = root.tags().iterator();
+        Iterator it = tags.iterator();
 
         HashMap ht = new HashMap();
         while (it.hasNext()) {

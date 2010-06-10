@@ -9,11 +9,13 @@ aspect Tags {
   AttrDecl      contributes ( new Tag(getName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
   ClassBodyDecl contributes ( new Tag(getName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
   SynEq         contributes ( new Tag(getName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
-  CollEq        contributes ( new Tag(getTargetAttributeName(), getFullFileName(),getStartLine())) to Grammar.tags() for getGrammar();
+  CollEq        contributes ( new Tag(getTargetAttributeName(), getFullFileName(), getStartLine())) to Grammar.tags() for getGrammar();
+  ASTDecl       contributes ( new Tag(getIdDecl().getID()     , getFullFileName(), getStartLine())) to Grammar.tags() for getGrammar();
 
   inh Grammar AttrEq.getGrammar();
   inh Grammar AttrDecl.getGrammar();
   inh Grammar ClassBodyDecl.getGrammar();
+  inh Grammar TypeDecl.getGrammar();
   eq Grammar.getTypeDecl(int i).getGrammar() = this;
 
   public String ASTNode.fullFileName = null;
@@ -36,8 +38,10 @@ aspect Tags {
   }
 
   private String Tag.tagText = null;
+  private boolean Tag.hasTagText=true;
   public String Tag.getTagText() {
       if (tagText!=null) return tagText;
+      if (hasTagText==false) return null;
       try {
           File file = new File(getFileName());
           FileReader freader = new FileReader(getFileName());
@@ -48,6 +52,7 @@ aspect Tags {
                   freader.close();
                   lnreader.close();
                   tagText = line;
+                  hasTagText = true;
                   return line;
               }
           }
@@ -55,12 +60,16 @@ aspect Tags {
       catch (Exception ex) {
           ex.printStackTrace();
       }
-      System.err.println("Warning: Could not get line " + getLineNumber() + " from file " + getFileName());
-      tagText = "failed";
-      return tagText;
+      System.err.println("Warning: Could not get line " + getLineNumber() + " from file " + getFileName() + ". Tag name was " + getName());
+      hasTagText = false;
+      return null;
   }
 
   Tag implements Comparable;
+
+  public boolean Tag.hasTagText() {
+      return null!=getTagText();
+  }
 
   public int Tag.compareTo(Object o) {
       if (o instanceof Tag) {
