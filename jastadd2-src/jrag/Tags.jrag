@@ -60,7 +60,7 @@ aspect Tags {
       catch (Exception ex) {
           ex.printStackTrace();
       }
-      System.err.println("Warning: Could not get line " + getLineNumber() + " from file " + getFileName() + ". Tag name was " + getName());
+      //System.err.println("Warning: Could not get line " + getLineNumber() + " from file " + getFileName() + ". Tag name was " + getName());
       hasTagText = false;
       return null;
   }

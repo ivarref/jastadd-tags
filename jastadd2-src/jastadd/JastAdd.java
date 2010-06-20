@@ -12,7 +12,7 @@ import jrag.*;
 
 public class JastAdd {
   
-    public static final String VERSION = "JastAdd II (http://jastadd.cs.lth.se) version R20100610";
+    public static final String VERSION = "JastAdd II (http://jastadd.cs.lth.se) version R20100620";
     public static final String VERSIONINFO = "\n// Generated with " + VERSION + "\n\n";
 
     protected java.util.List files;
@@ -242,7 +242,7 @@ public class JastAdd {
                     fw.write(tag.getName() + "\t" + tag.getFileName() + "\t/^" + tag.getTagText() + "$/\n");
                 }
                 fw.close();
-                System.out.println("Wrote tags file.");
+                //System.out.println("Wrote tags file.");
 
                 writeEmacsTagsFile(validTags);
 
@@ -315,7 +315,7 @@ public class JastAdd {
         }
 
         fw.close();
-        System.out.println("Wrote emacs TAGS file.");
+        //System.out.println("Wrote emacs TAGS file.");
     }
 
     /* Read and process commandline */
